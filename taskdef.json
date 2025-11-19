@@ -22,5 +22,6 @@
     "networkMode": "awsvpc",
     "cpu": "256",
     "memory": "512",
-    "executionRoleArn": "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/ECSTaskExecutionRole"
+    "executionRoleArn": "arn:aws:iam::438465168394:role/ecs_task_execution"
+
 }
