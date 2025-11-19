@@ -6,7 +6,7 @@ env:
     AWS_DEFAULT_REGION: "ap-northeast-1"
     IMAGE_REPO_NAME: "my-webapp-repo-github"
     ECS_CLUSTER_NAME: "my-cluster"
-    ECS_SERVICE_NAME: "my-webapp-service"
+    ECS_SERVICE_NAME: "my-webapp-task-service"
     ECS_TASK_DEFINITION_NAME: "my-webapp-task"
 
 phases:
@@ -41,4 +41,5 @@ phases:
       - echo "Updating ECS service..."
       - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition "$ECS_TASK_DEFINITION_NAME:$NEW_REVISION" --force-new-deployment
       - echo "ECS service updated successfully."
+
 
