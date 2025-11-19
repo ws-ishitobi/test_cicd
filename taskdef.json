@@ -1,0 +1,26 @@
+{
+    "family": "my-webapp-task",
+    "containerDefinitions": [
+        {
+            "name": "my-webapp-container",
+            "image": "<IMAGE_URI_PLACEHOLDER>",
+            "cpu": 256,
+            "memory": 512,
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/ECSTaskExecutionRole"
+}
