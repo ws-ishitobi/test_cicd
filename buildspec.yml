@@ -1,0 +1,43 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_ACCOUNT_ID: "YOUR_AWS_ACCOUNT_ID"
+    AWS_DEFAULT_REGION: "YOUR_AWS_REGION"
+    IMAGE_REPO_NAME: "my-webapp-repo-github"
+    ECS_CLUSTER_NAME: "my-cluster"
+    ECS_SERVICE_NAME: "my-webapp-service"
+    ECS_TASK_DEFINITION_NAME: "my-webapp-task"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo Building the Docker image with tag $IMAGE_TAG...
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Creating new task definition...
+      - IMAGE_URI_WITH_TAG=$REPOSITORY_URI:$IMAGE_TAG
+      # taskdef.jsonのプレースホルダーを、ビルドした実際のイメージURIに置き換える
+      - sed -i -e "s|<IMAGE_URI_PLACEHOLDER>|$IMAGE_URI_WITH_TAG|g" taskdef.json
+      # 新しいタスク定義を登録し、そのリビジョンを取得
+      - NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json file://taskdef.json)
+      - NEW_REVISION=$(echo $NEW_TASK_INFO | jq .taskDefinition.revision)
+      - echo "New task definition revision: $NEW_REVISION"
+      # ECSサービスを更新して、新しいタスク定義を適用
+      - echo "Updating ECS service..."
+      - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition "$ECS_TASK_DEFINITION_NAME:$NEW_REVISION" --force-new-deployment
+      - echo "ECS service updated successfully."
